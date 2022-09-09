@@ -10,7 +10,7 @@ A shiny app for deriving local/global explanations of UMAP embeddings based on p
 - (E) Discriminatory features between clusters A and B
 
 # Installation
-The easiest way to install the X-MAP is from within the RStudio IDE. Just run ui.R. We recommend running the app in a web browser.
+The easiest way to install the X-MAP is from within the RStudio IDE. Just run server.R. We recommend running the app in a web browser.
 
 # Usage
 - Load dataset: Click browse in (A) and choose an .rds data file. See ./data/dummy_data for an example.
