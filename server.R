@@ -1,27 +1,3 @@
-suppressPackageStartupMessages({
-  library(shiny)
-  library(pracma)
-  library(renv)
-  library(ggExtra)
-  library(plotly)
-  library(ggplot2)
-  library(dplyr)
-  library(magrittr)
-  library(data.table)
-  library(DT)
-  library(shinydashboard)
-  library(shinycssloaders)
-  library(tictoc)
-  library(ggcorrplot)
-  library(umap)
-  library(heatmaply)
-  library(tidyr)
-  library(factoextra)
-  library(corrplot)
-  library(skimr)
-  library(ggvoronoi)
-})
-
 enableBookmarking(store = "url")
 
 # global_base_size = 40
@@ -59,7 +35,7 @@ shinyServer(function(input, output, session) {
   
   observeEvent(input$embedd_model, {
     # return if no data is uploaded
-    if (is.null(data_basis$raw_data)) {
+    if (is.null(data_basis$raw_data_pivot)) {
       showNotification(
         "[ERROR] Please upload the raw data or prebuilt embeddings! (icon on top right corner)",
         type = "error"
@@ -75,18 +51,19 @@ shinyServer(function(input, output, session) {
     withProgress(message = 'Generating UMAP Embedding', value = 0, {
       incProgress(0.2, detail = "Compute PCA")
       
-      target_col <- input$param_umap_targetcol
+      target_col <- input$target_feature
       
       if (target_col == "None") {
         target_col <- NULL
       }
       
       tictoc::tic("PCA Calculation")
+      subset<- data_basis$raw_data_pivot %>% select(-c(target_col)) %>% as.data.frame()
+      find.numeric <- sapply(subset, is.numeric)
+      subset <- subset[,find.numeric]
       
       pca_input_dat <-
-        apply(as.matrix(data_basis$raw_data_pivot %>% select(-c(
-          TIME, target_col
-        ))),
+        apply(as.matrix(subset),
         2,
         scale,
         scale = F)
@@ -94,8 +71,8 @@ shinyServer(function(input, output, session) {
         prcomp(pca_input_dat, center = FALSE, scale = FALSE)
       rel_sd <- cumsum(res_pca$sdev ^ 2) / sum(res_pca$sdev ^ 2)
       #umap_data <- res_pca$x[, get_eig(res_pca)$cumulative.variance.percent < 99]
-      umap_data <- res_pca$x[,1:input$n_pca_dim]
-
+      umap_data <- res_pca$x[, 1:input$n_pca_dim]
+      
       data_basis$no_sig_pcs <- NCOL(umap_data)
       
       tictoc::toc()
@@ -127,48 +104,24 @@ shinyServer(function(input, output, session) {
       
       max_comp <- 25
       no_pcs <- min(max_comp, ncol(umap_data)) #res_pca$x
+      q_vals <- lapply(1:no_pcs, function(pc) {
+        inner <-
+          (diag(ncol(res_pca$rotation)) - res_pca$rotation[, pc] %*% t(res_pca$rotation[, pc]))
+        qis <- do.call(c, lapply(1:nrow(res_pca$x), function(i) {
+          # q_val <- res_pca$x[i,,drop=F] %*% inner %*% t(res_pca$x[i,,drop=F])
+          q_val <-
+            pca_input_dat[i, , drop = F] %*% inner %*% t(pca_input_dat[i, , drop =
+                                                                         F])
+          return(q_val)
+        }))
+        qis <- (qis - min(qis))
+        qis <- (qis / max(qis))
+        # qis <- abs(qis) * -1
+        return(qis)
+      })
+      names(q_vals) <- sprintf("PC %02d", 1:no_pcs)
+      q_vals <- do.call(bind_cols, q_vals)
       
-      # q_vals <- future.apply::future_lapply(1:no_pcs, function(pc) {
-      #   inner <-
-      #     (diag(ncol(res_pca$rotation)) - res_pca$rotation[, pc] %*% t(res_pca$rotation[, pc]))
-      #   qis <- do.call(c, lapply(1:nrow(res_pca$x), function(i) {
-      #     # q_val <- res_pca$x[i,,drop=F] %*% inner %*% t(res_pca$x[i,,drop=F])
-      #     q_val <-
-      #       pca_input_dat[i, , drop = F] %*% inner %*% t(pca_input_dat[i, , drop =
-      #                                                                    F])
-      #     return(q_val)
-      #   }))
-      #   return(qis)
-      # })
-      # names(q_vals) <- sprintf("PC %02d", 1:no_pcs)
-      # q_vals <- do.call(bind_cols, q_vals)
-      # 
-      # q_vals <- t(apply(q_vals, 2, function(qis) {
-      #   qis <- (qis - min(qis))
-      #   qis <- (qis / max(qis))
-      #   qis <- abs(qis) * -1
-      # }))
-      
-      
-      
-      q_vals <- lapply(1:no_pcs, function(pc){
-      inner <- (diag(ncol(res_pca$rotation)) - res_pca$rotation[,pc] %*% t(res_pca$rotation[,pc]))
-      qis <- do.call(c, lapply(1:nrow(res_pca$x), function(i){
-      # q_val <- res_pca$x[i,,drop=F] %*% inner %*% t(res_pca$x[i,,drop=F])
-      q_val <- pca_input_dat[i,,drop=F] %*% inner %*% t(pca_input_dat[i,,drop=F])
-      return(q_val)
-      }))
-      qis <- (qis - min(qis))
-      qis <- (qis / max(qis))
-      # qis <- abs(qis) * -1
-  return(qis)
-})
-names(q_vals) <- sprintf("PC %02d", 1:no_pcs)
-q_vals <- do.call(bind_cols, q_vals)
-
-
-
-
       tictoc::toc()
       
       incProgress(0.1, detail = "Calculating Hotteling's T2")
@@ -203,73 +156,46 @@ q_vals <- do.call(bind_cols, q_vals)
   
   observe({
     if (input$select_points_for == "Cluster A") {
-      data_basis$point_selection_A = event_data("plotly_selected")
+      if(!is.null(event_data("plotly_selected")) & length(event_data("plotly_selected"))>0){
+        data_basis$point_selection_A = event_data("plotly_selected") %>% select(pointNumber)
+      }
     } else if (input$select_points_for == "Cluster B") {
-      data_basis$point_selection_B = event_data("plotly_selected")
+      if(!is.null(event_data("plotly_selected"))  & length(event_data("plotly_selected"))>0){
+        data_basis$point_selection_B = event_data("plotly_selected") %>% select(pointNumber)
+      }
     }
   })
   
   
-  output$pointselectionA <-
-    renderDataTable(
-      as.data.frame(data_basis$point_selection_A) %>% select(pointNumber),
-      extensions = "FixedHeader",
-      style = "bootstrap4",
-      options = list(
-        pageLength = 3,
-        autoWidth = TRUE,
-        paging = TRUE,
-        searching = TRUE,
-        ordering = TRUE,
-        fixedHeader = TRUE
-      )
-    )
-  
-  output$pointselectionB <-
-    renderDataTable(
-      as.data.frame(data_basis$point_selection_B) %>% select(pointNumber),
-      extensions = "FixedHeader",
-      style = "bootstrap4",
-      options = list(
-        pageLength = 3,
-        autoWidth = TRUE,
-        paging = TRUE,
-        searching = TRUE,
-        ordering = TRUE,
-        fixedHeader = TRUE
-      )
-    )
+  output$pointselectionA <- renderDataTable(data_basis$point_selection_A,extensions = "FixedHeader",
+                    style = "bootstrap4",
+                    options = list(
+                      pageLength = 3,
+                      autoWidth = TRUE,
+                      paging = TRUE,
+                      searching = F,
+                      ordering = TRUE,
+                      fixedHeader = TRUE
+                    ))
+
+  output$pointselectionB <- renderDataTable(data_basis$point_selection_B,extensions = "FixedHeader",
+                    style = "bootstrap4",
+                    options = list(
+                      pageLength = 3,
+                      autoWidth = TRUE,
+                      paging = TRUE,
+                      searching = F,
+                      ordering = TRUE,
+                      fixedHeader = TRUE
+                    ))
+
   
   
   observeEvent(input$raw_data_upload, {
     file <- input$raw_data_upload
-    ext <- tools::file_ext(file$datapath)
-    req(file)
-    #validate(need(ext == "Rds", "Please upload a RDS file"))
-    
     tictoc::tic("Data Upload")
-    
-    raw_data <-
-      readRDS(file = file$datapath) %>% as.data.table() #%>% slice_sample(prop = 0.01)
-    
-    print(nrow(raw_data))
-    
-    names(raw_data) <-
-      c("TIME", "FEATURE", "VALUE")
-    
-    raw_data$TIME = as.POSIXct(raw_data$TIME)
-    setkey(raw_data, FEATURE)
-    raw_data$FEATURE <-
-      as.factor(raw_data$FEATURE)
-    raw_data$VALUE <-
-      as.double(raw_data$VALUE)
-    
-    data_basis$raw_data <- raw_data
-    
-    
-    data_basis$raw_data_pivot <-
-      data_basis$raw_data %>% spread(FEATURE, VALUE, fill = 0)
-    
+    raw_data <- fread(file$datapath)
+    data_basis$raw_data_pivot <- raw_data
     tictoc::toc()
     
     updateSliderInput(session,
@@ -277,6 +203,9 @@ q_vals <- do.call(bind_cols, q_vals)
                       max = NCOL(data_basis$raw_data_pivot))
     updateSelectInput(session,
                       "param_umap_targetcol",
+                      choices = c("None", colnames(data_basis$raw_data_pivot)))
+    updateSelectInput(session,
+                      "target_feature",
                       choices = c("None", colnames(data_basis$raw_data_pivot)))
   })
   
@@ -306,8 +235,12 @@ q_vals <- do.call(bind_cols, q_vals)
         target_col <- NULL
       }
       
+      subset<- data_basis$raw_data_pivot %>% select(-c(target_col)) %>% as.data.frame()
+      find.numeric <- sapply(subset, is.numeric)
+      subset <- subset[,find.numeric]
+      
       pca_input_dat <-
-        apply(as.matrix(data_basis$raw_data_pivot %>% select(-c(TIME))),
+        apply(as.matrix(subset),
               2,
               scale,
               scale = F)
@@ -318,7 +251,7 @@ q_vals <- do.call(bind_cols, q_vals)
                  no_pcs,
                  pca_model) {
           as.data.frame(do.call(rbind, (lapply(sample_idxs, function(sample_idx) {
-            calcluateTContributions(pca_input_dat[sample_idx,], no_pcs, pca_model)
+            calcluateTContributions(pca_input_dat[sample_idx, ], no_pcs, pca_model)
           }))))
         }
       
@@ -363,12 +296,15 @@ q_vals <- do.call(bind_cols, q_vals)
         ) + scale_x_continuous(limits = c(
           min(plotting_data$Rel_Contribution),
           max(plotting_data$Rel_Contribution)
-        )) + ggtitle("rel. Hotellings T2 contributions btw. Clusters A and B") + geom_vline(xintercept = 0, alpha = 0.6) + 
-        theme(text = element_text(size = global_text_size), plot.title = element_text(size = global_plot_title_size)) +
+        )) + ggtitle("Rel. Hotellings T2 Contributions btw. Clusters A and B") + geom_vline(xintercept = 0, alpha = 0.6) +
+        theme(
+          text = element_text(size = global_text_size),
+          plot.title = element_text(size = global_plot_title_size)
+        ) +
         # theme_dark(base_size=global_base_size) +
-      xlab("Contribution")
+        xlab("Contribution")
       tictoc::toc()
-      ggplotly(plt_obj, height = 850)
+      ggplotly(plt_obj, height=600)
     }
   })
   
@@ -395,9 +331,12 @@ q_vals <- do.call(bind_cols, q_vals)
           ggtheme = NULL,
           ncp = n_plot_dims,
           addlabels = T
-        ) + 
+        ) +
         # theme_dark(base_size=global_base_size)
-        theme(text = element_text(size = global_text_size), plot.title = element_text(size = global_plot_title_size))
+        theme(
+          text = element_text(size = global_text_size),
+          plot.title = element_text(size = global_plot_title_size)
+        )
       
       
       fig$layers[[1]]$aes_params$fill <-
@@ -410,85 +349,6 @@ q_vals <- do.call(bind_cols, q_vals)
       return (fig)
     }
   })
-  
-  # output$line_graph <- renderPlotly({
-  #   if (!is.null(data_basis$raw_data)) {
-  #     tictoc::tic(msg = "Generate Line Chart")
-  #     fig <-
-  #       data_basis$raw_data %>% ggplot(aes(x = TIME, y = VALUE)) + ggtitle("Linechart per Feature") + geom_line(color = "#007BFF") + facet_wrap( ~ FEATURE, ncol = 2) + 
-  #       # theme_dark(base_size=global_base_size)
-  #       theme(text = element_text(size = 10), plot.title = element_text(size = global_text_size))
-  #     
-  #     plotly_fig <- ggplotly(fig)
-  #     tictoc::toc()
-  #     
-  #     return (plotly_fig)
-  #   }
-  # })
-  # 
-  # output$histogram_graph <- renderPlotly({
-  #   if (!is.null(data_basis$raw_data)) {
-  #     tictoc::tic(msg = "Generate Histogram Chart")
-  #     fig <-
-  #       data_basis$raw_data %>% ggplot(aes(x = VALUE)) + ggtitle("Histogram per Feature") + geom_histogram(color = "#007BFF", alpha = 0.3) + geom_rug(col = "#007BFF", alpha = 0.2) + facet_wrap( ~ FEATURE, ncol = 2) + 
-  #       theme(text = element_text(size = 10), plot.title = element_text(size = global_text_size))
-  #       # theme_dark(base_size=global_base_size)
-  #     plotly_fig <- ggplotly(fig)
-  #     tictoc::toc()
-  #     return (plotly_fig)
-  #   }
-  # })
-  # 
-  # output$violin_graph <- renderPlotly({
-  #   if (!is.null(data_basis$raw_data)) {
-  #     tictoc::tic(msg = "Generate Violin Chart")
-  #     fig <-
-  #       data_basis$raw_data %>% ggplot(aes(y = VALUE, x = FEATURE)) + ggtitle("Violin per Feature") + geom_violin(color = "#007BFF", alpha = 0.6) +  facet_wrap( ~ FEATURE, scale = "free_y", ncol = 1) +
-  #       theme(text = element_text(size = 12), plot.title = element_text(size = global_plot_title_size))
-  #       # theme_dark(base_size=global_base_size)
-  #     
-  #     plotly_fig <- ggplotly(fig)
-  #     tictoc::toc()
-  #     return (plotly_fig)
-  #     
-  #   }
-  # })
-  # 
-  # output$boxplot_graph <- renderPlotly({
-  #   if (!is.null(data_basis$raw_data)) {
-  #     tictoc::tic(msg = "Generate Boxplot Chart")
-  #     fig <-
-  #       data_basis$raw_data %>% ggplot(aes(y = VALUE, x = FEATURE)) + ggtitle("Boxplot per Feature") +
-  #       geom_boxplot(color = "#007BFF", alpha = 0.3) + facet_wrap( ~ FEATURE, scale = "free_y", ncol = 1) + 
-  #       # theme_dark(base_size=global_base_size)
-  #       theme(text = element_text(size = 12), plot.title = element_text(size = global_plot_title_size))
-  #     plotly_fig <- ggplotly(fig)
-  #     tictoc::toc()
-  #     return (plotly_fig)
-  #   }
-  # })
-  # 
-  # 
-  # output$correlation_graph <- renderPlot({
-  #   if (!is.null(data_basis$raw_data_pivot)) {
-  #     tictoc::tic(msg = "Generate Correlation Chart")
-  #     plotting_data <-
-  #       cor(data_basis$raw_data_pivot %>% select(-TIME))
-  #     plotting_data[is.na(plotting_data)] <- 0
-  #     
-  #     fig <-
-  #       corrplot(plotting_data,
-  #                bg = NULL,
-  #                method = 'number',
-  #                order = 'original') + 
-  #       # theme_dark(base_size=global_base_size)
-  #       theme(text = element_text(size = global_text_size), plot.title = element_text(size = 16))
-  #     #plotly_fig <- ggplotly(fig)
-  #     tictoc::toc()
-  #     return (fig)
-  #   }
-  # })
-  
   
   output$voronoi_tabs <- renderUI({
     if (!is.null(data_basis$embedded_model)) {
@@ -506,6 +366,9 @@ q_vals <- do.call(bind_cols, q_vals)
       if (target_col %in% colnames(data_basis$raw_data_pivot)) {
         plot_labels <-
           data_basis$raw_data_pivot[[target_col]]
+        if(!is.numeric(plot_labels)){
+          plot_labels <- as.factor(plot_labels)
+        }
       } else{
         plot_labels <- NULL
       }
@@ -534,30 +397,48 @@ q_vals <- do.call(bind_cols, q_vals)
         #param_loading_threshold
         plt_obj <-
           ggplot(plotting_data,
-                 aes( y = Feature, x = Loading, fill = Loading )) +
-          geom_bar( stat = "identity", fill = ifelse( plotting_data$Loading > 0, includance_color, excludance_color)) +
+                 aes(
+                   y = Feature,
+                   x = Loading,
+                   fill = Loading
+                 )) +
+          geom_bar(
+            stat = "identity",
+            fill = ifelse(
+              plotting_data$Loading > 0,
+              includance_color,
+              excludance_color
+            )
+          ) +
           scale_x_continuous(limits = c(-1, 1)) + ggtitle(paste0("Loadings for PC", tab)) +
           geom_vline(xintercept = 0, alpha = 0.6) +
-          theme(text = element_text(size = global_text_size), plot.title = element_text(size = global_plot_title_size))
-          # theme_dark(base_size=global_base_size)
-        
+          theme(
+            text = element_text(size = global_text_size),
+            plot.title = element_text(size = global_plot_title_size)
+          )
         
       })
       
       voronoiTabs = lapply(1:nTabs, function(x) {
         tabPanel(paste0("PC", x),
+              fluidPage(
                  fluidRow(column(
                    6,
                    renderPlotly(
-                     ggplotly(voronoi_plots[[x]] + theme(text = element_text(size = global_text_size), plot.title = element_text(size = global_plot_title_size))
-          # + theme_dark(base_size=global_base_size)
-                              , height = 780) %>% layout(dragmode = "select")
+                     ggplotly(
+                       voronoi_plots[[x]] + theme(
+                         text = element_text(size = global_text_size),
+                         plot.title = element_text(size = global_plot_title_size)
+                       ),
+                       height = 600,
+                       #width = 700
+                     ) %>% layout(dragmode = "select")
                    )
                  ),
                  column(6,
                         renderPlotly(
-                          ggplotly(loading_plots[[x]], height = 780) # height=780
-                        ))))
+                          ggplotly(loading_plots[[x]], height=600)# height=780
+                        )))))
       })
       tictoc::toc()
       do.call(tabsetPanel, voronoiTabs)

@@ -1,7 +1,10 @@
+# Install & Load packages
+if (!require("pacman"))
+  install.packages("pacman")
+pacman::p_load(shiny, dplyr, pracma, ggExtra, plotly, ggplot2, magrittr, data.table, DT, bs4Dash, shinycssloaders, shinyWidgets, thematic, tictoc, umap, tidyr, factoextra, pracma, ggvoronoi)
+
 # global variables
 umap_distance_metrics <- c("euclidean","manhattan","cosine")
-# includance_color <- "#16A085" #green
-# excludance_color <- "#C0392B" #red
 
 includance_color <- "#225EA8" #blueish
 excludance_color <- "#E31A1C" #redish
@@ -55,9 +58,9 @@ createVoronoiPlots <-
         
         if(!is.null(plot_labels)){
           p1 <- p1 + geom_point(aes(colour = plot_labels))
-          # if(is.numeric(plot_labels)){
-          p1 <- p1 + scale_color_gradient(low=colorPointsLow, high=colorPointsHigh)
-          # }
+          if(is.numeric(plot_labels)){
+            p1 <- p1 + scale_color_gradient(low=colorPointsLow, high=colorPointsHigh)
+          }
         }else{
           p1 <- p1 + geom_point(col=colorPointsDefault)
         }
@@ -72,7 +75,6 @@ createVoronoiPlots <-
         } else{
           g <- p1
         }
-        
         plots <- c(plots, list(g))
         tictoc::toc()
         if (calc_first_only == T) {

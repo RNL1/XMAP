@@ -1,5 +1,5 @@
 # X-MAP GUI
-A shiny app for deriving local/global explanations of UMAP embeddings based on principal component analysis (PCA).  
+A shiny app for deriving local/global explanations of UMAP embeddings based on principal component analysis (PCA).
 
 <a href="url"><img src="images/overview_app.png" align="center"  width="1000" ></a>
 
@@ -9,11 +9,15 @@ A shiny app for deriving local/global explanations of UMAP embeddings based on p
 - (D) UMAP embedding and loadings
 - (E) Discriminatory features between clusters A and B
 
+An Iris dataset example:
+
+<a href="url"><img src="images/overview_app_iris_example.png" align="center" width="1000"></a>
+
 # Installation
 The easiest way to install the X-MAP is from within the RStudio IDE. Just run server.R. We recommend running the app in a web browser.
 
 # Usage
-- Load dataset: Click browse in (A) and choose an .rds data file. See ./data/dummy_data for an example.
+- Load dataset: Click browse in (A) and choose an .csv data file. See ./data/example_dummy or ./data/example_iris for an example.
 - Parameterization: Choose number of neighbors, minimal distance, distance metric, training epochs and number of PCs, and press "Embedd UMAP Model"
 - Visualization: The fraction of explained variance (B), embedding and PC loadings (D) are displayed. The optimal number of PCs is indicated as red bar. 
 Separate tabs for every PC are available. The Voronoi areas can either be colored according to the corresponding PCs score or the Q-Residuals. The latter
@@ -24,11 +28,16 @@ data points to be compared with the points from the other clusters. Note that th
 Once both clusters are selected, the corresponding data points show up in (C) and relative Hotelling's T2 contributions indicating the feature importance of each variable for discrimination of the 
 clusters are shown in (E).
 
+# Notes
+Be aware that this is a prototype implementation. Not all user interface components ar fully responsive and the calculations are not optimized.
+
 # Reference
 <a id="1">[1]</a> Roman Josef Rainer, Michael Mayr, Johannes Himmelbauer, Ramin Nikzad-Langerodi (2022).
 Opening the black-box of Neighbor Embedding with
 Hotelling's T2 statistic and Q-residuals.
 
 # Contact
+michael.mayr@scch.at
+roman.rainer@scch.at
 ramin.nikzad-langerodi@scch.at
 
