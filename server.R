@@ -411,83 +411,83 @@ q_vals <- do.call(bind_cols, q_vals)
     }
   })
   
-  output$line_graph <- renderPlotly({
-    if (!is.null(data_basis$raw_data)) {
-      tictoc::tic(msg = "Generate Line Chart")
-      fig <-
-        data_basis$raw_data %>% ggplot(aes(x = TIME, y = VALUE)) + ggtitle("Linechart per Feature") + geom_line(color = "#007BFF") + facet_wrap( ~ FEATURE, ncol = 2) + 
-        # theme_dark(base_size=global_base_size)
-        theme(text = element_text(size = 10), plot.title = element_text(size = global_text_size))
-      
-      plotly_fig <- ggplotly(fig)
-      tictoc::toc()
-      
-      return (plotly_fig)
-    }
-  })
-  
-  output$histogram_graph <- renderPlotly({
-    if (!is.null(data_basis$raw_data)) {
-      tictoc::tic(msg = "Generate Histogram Chart")
-      fig <-
-        data_basis$raw_data %>% ggplot(aes(x = VALUE)) + ggtitle("Histogram per Feature") + geom_histogram(color = "#007BFF", alpha = 0.3) + geom_rug(col = "#007BFF", alpha = 0.2) + facet_wrap( ~ FEATURE, ncol = 2) + 
-        theme(text = element_text(size = 10), plot.title = element_text(size = global_text_size))
-        # theme_dark(base_size=global_base_size)
-      plotly_fig <- ggplotly(fig)
-      tictoc::toc()
-      return (plotly_fig)
-    }
-  })
-  
-  output$violin_graph <- renderPlotly({
-    if (!is.null(data_basis$raw_data)) {
-      tictoc::tic(msg = "Generate Violin Chart")
-      fig <-
-        data_basis$raw_data %>% ggplot(aes(y = VALUE, x = FEATURE)) + ggtitle("Violin per Feature") + geom_violin(color = "#007BFF", alpha = 0.6) +  facet_wrap( ~ FEATURE, scale = "free_y", ncol = 1) +
-        theme(text = element_text(size = 12), plot.title = element_text(size = global_plot_title_size))
-        # theme_dark(base_size=global_base_size)
-      
-      plotly_fig <- ggplotly(fig)
-      tictoc::toc()
-      return (plotly_fig)
-      
-    }
-  })
-  
-  output$boxplot_graph <- renderPlotly({
-    if (!is.null(data_basis$raw_data)) {
-      tictoc::tic(msg = "Generate Boxplot Chart")
-      fig <-
-        data_basis$raw_data %>% ggplot(aes(y = VALUE, x = FEATURE)) + ggtitle("Boxplot per Feature") +
-        geom_boxplot(color = "#007BFF", alpha = 0.3) + facet_wrap( ~ FEATURE, scale = "free_y", ncol = 1) + 
-        # theme_dark(base_size=global_base_size)
-        theme(text = element_text(size = 12), plot.title = element_text(size = global_plot_title_size))
-      plotly_fig <- ggplotly(fig)
-      tictoc::toc()
-      return (plotly_fig)
-    }
-  })
-  
-  
-  output$correlation_graph <- renderPlot({
-    if (!is.null(data_basis$raw_data_pivot)) {
-      tictoc::tic(msg = "Generate Correlation Chart")
-      plotting_data <-
-        cor(data_basis$raw_data_pivot %>% select(-TIME))
-      plotting_data[is.na(plotting_data)] <- 0
-      
-      fig <-
-        corrplot(plotting_data,
-                 bg = NULL,
-                 method = 'number',
-                 order = 'original') + 
-        # theme_dark(base_size=global_base_size)
-        theme(text = element_text(size = global_text_size), plot.title = element_text(size = 16))
-      #plotly_fig <- ggplotly(fig)
-      tictoc::toc()
-      return (fig)
-    }
-  })
+  # output$line_graph <- renderPlotly({
+  #   if (!is.null(data_basis$raw_data)) {
+  #     tictoc::tic(msg = "Generate Line Chart")
+  #     fig <-
+  #       data_basis$raw_data %>% ggplot(aes(x = TIME, y = VALUE)) + ggtitle("Linechart per Feature") + geom_line(color = "#007BFF") + facet_wrap( ~ FEATURE, ncol = 2) + 
+  #       # theme_dark(base_size=global_base_size)
+  #       theme(text = element_text(size = 10), plot.title = element_text(size = global_text_size))
+  #     
+  #     plotly_fig <- ggplotly(fig)
+  #     tictoc::toc()
+  #     
+  #     return (plotly_fig)
+  #   }
+  # })
+  # 
+  # output$histogram_graph <- renderPlotly({
+  #   if (!is.null(data_basis$raw_data)) {
+  #     tictoc::tic(msg = "Generate Histogram Chart")
+  #     fig <-
+  #       data_basis$raw_data %>% ggplot(aes(x = VALUE)) + ggtitle("Histogram per Feature") + geom_histogram(color = "#007BFF", alpha = 0.3) + geom_rug(col = "#007BFF", alpha = 0.2) + facet_wrap( ~ FEATURE, ncol = 2) + 
+  #       theme(text = element_text(size = 10), plot.title = element_text(size = global_text_size))
+  #       # theme_dark(base_size=global_base_size)
+  #     plotly_fig <- ggplotly(fig)
+  #     tictoc::toc()
+  #     return (plotly_fig)
+  #   }
+  # })
+  # 
+  # output$violin_graph <- renderPlotly({
+  #   if (!is.null(data_basis$raw_data)) {
+  #     tictoc::tic(msg = "Generate Violin Chart")
+  #     fig <-
+  #       data_basis$raw_data %>% ggplot(aes(y = VALUE, x = FEATURE)) + ggtitle("Violin per Feature") + geom_violin(color = "#007BFF", alpha = 0.6) +  facet_wrap( ~ FEATURE, scale = "free_y", ncol = 1) +
+  #       theme(text = element_text(size = 12), plot.title = element_text(size = global_plot_title_size))
+  #       # theme_dark(base_size=global_base_size)
+  #     
+  #     plotly_fig <- ggplotly(fig)
+  #     tictoc::toc()
+  #     return (plotly_fig)
+  #     
+  #   }
+  # })
+  # 
+  # output$boxplot_graph <- renderPlotly({
+  #   if (!is.null(data_basis$raw_data)) {
+  #     tictoc::tic(msg = "Generate Boxplot Chart")
+  #     fig <-
+  #       data_basis$raw_data %>% ggplot(aes(y = VALUE, x = FEATURE)) + ggtitle("Boxplot per Feature") +
+  #       geom_boxplot(color = "#007BFF", alpha = 0.3) + facet_wrap( ~ FEATURE, scale = "free_y", ncol = 1) + 
+  #       # theme_dark(base_size=global_base_size)
+  #       theme(text = element_text(size = 12), plot.title = element_text(size = global_plot_title_size))
+  #     plotly_fig <- ggplotly(fig)
+  #     tictoc::toc()
+  #     return (plotly_fig)
+  #   }
+  # })
+  # 
+  # 
+  # output$correlation_graph <- renderPlot({
+  #   if (!is.null(data_basis$raw_data_pivot)) {
+  #     tictoc::tic(msg = "Generate Correlation Chart")
+  #     plotting_data <-
+  #       cor(data_basis$raw_data_pivot %>% select(-TIME))
+  #     plotting_data[is.na(plotting_data)] <- 0
+  #     
+  #     fig <-
+  #       corrplot(plotting_data,
+  #                bg = NULL,
+  #                method = 'number',
+  #                order = 'original') + 
+  #       # theme_dark(base_size=global_base_size)
+  #       theme(text = element_text(size = global_text_size), plot.title = element_text(size = 16))
+  #     #plotly_fig <- ggplotly(fig)
+  #     tictoc::toc()
+  #     return (fig)
+  #   }
+  # })
   
   
   output$voronoi_tabs <- renderUI({
