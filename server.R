@@ -24,6 +24,11 @@ suppressPackageStartupMessages({
 
 enableBookmarking(store = "url")
 
+# global_base_size = 40
+global_text_size = 18
+# global_text_size = 18
+global_plot_title_size = 20
+
 shinyServer(function(input, output, session) {
   data_basis <-
     reactiveValues(
@@ -358,9 +363,10 @@ q_vals <- do.call(bind_cols, q_vals)
         ) + scale_x_continuous(limits = c(
           min(plotting_data$Rel_Contribution),
           max(plotting_data$Rel_Contribution)
-        )) + ggtitle("rel. Hotellings T2 contributions btw. Clusters A and B") + geom_vline(xintercept =
-                                                                                          0, alpha = 0.6) + theme(text = element_text(size = 14),
-                                                                                                                  plot.title = element_text(size = 18)) + xlab("Contribution")
+        )) + ggtitle("rel. Hotellings T2 contributions btw. Clusters A and B") + geom_vline(xintercept = 0, alpha = 0.6) + 
+        theme(text = element_text(size = global_text_size), plot.title = element_text(size = global_plot_title_size)) +
+        # theme_dark(base_size=global_base_size) +
+      xlab("Contribution")
       tictoc::toc()
       ggplotly(plt_obj, height = 850)
     }
@@ -389,8 +395,9 @@ q_vals <- do.call(bind_cols, q_vals)
           ggtheme = NULL,
           ncp = n_plot_dims,
           addlabels = T
-        ) + theme(text = element_text(size = 12),
-                  plot.title = element_text(size = 18))
+        ) + 
+        # theme_dark(base_size=global_base_size)
+        theme(text = element_text(size = global_text_size), plot.title = element_text(size = global_plot_title_size))
       
       
       fig$layers[[1]]$aes_params$fill <-
@@ -408,10 +415,9 @@ q_vals <- do.call(bind_cols, q_vals)
     if (!is.null(data_basis$raw_data)) {
       tictoc::tic(msg = "Generate Line Chart")
       fig <-
-        data_basis$raw_data %>% ggplot(aes(x = TIME, y = VALUE)) + ggtitle("Linechart per Feature") + geom_line(color = "#007BFF") + facet_wrap( ~ FEATURE, ncol =
-                                                                                                                                                   2) + theme(text = element_text(size =
-                                                                                                                                                                                    10),
-                                                                                                                                                              plot.title = element_text(size = 14))
+        data_basis$raw_data %>% ggplot(aes(x = TIME, y = VALUE)) + ggtitle("Linechart per Feature") + geom_line(color = "#007BFF") + facet_wrap( ~ FEATURE, ncol = 2) + 
+        # theme_dark(base_size=global_base_size)
+        theme(text = element_text(size = 10), plot.title = element_text(size = global_text_size))
       
       plotly_fig <- ggplotly(fig)
       tictoc::toc()
@@ -424,8 +430,9 @@ q_vals <- do.call(bind_cols, q_vals)
     if (!is.null(data_basis$raw_data)) {
       tictoc::tic(msg = "Generate Histogram Chart")
       fig <-
-        data_basis$raw_data %>% ggplot(aes(x = VALUE)) + ggtitle("Histogram per Feature") + geom_histogram(color = "#007BFF", alpha = 0.3) + geom_rug(col = "#007BFF", alpha = 0.2) + facet_wrap( ~ FEATURE, ncol = 2) + theme(text = element_text(size = 10),
-                                                                                                                                                                                                                               plot.title = element_text(size = 14))
+        data_basis$raw_data %>% ggplot(aes(x = VALUE)) + ggtitle("Histogram per Feature") + geom_histogram(color = "#007BFF", alpha = 0.3) + geom_rug(col = "#007BFF", alpha = 0.2) + facet_wrap( ~ FEATURE, ncol = 2) + 
+        theme(text = element_text(size = 10), plot.title = element_text(size = global_text_size))
+        # theme_dark(base_size=global_base_size)
       plotly_fig <- ggplotly(fig)
       tictoc::toc()
       return (plotly_fig)
@@ -436,9 +443,9 @@ q_vals <- do.call(bind_cols, q_vals)
     if (!is.null(data_basis$raw_data)) {
       tictoc::tic(msg = "Generate Violin Chart")
       fig <-
-        data_basis$raw_data %>% ggplot(aes(y = VALUE, x = FEATURE)) + ggtitle("Violin per Feature") + geom_violin(color = "#007BFF", alpha = 0.6) +  facet_wrap( ~ FEATURE, scale = "free_y", ncol =
-                                                                                                                                                                   1) + theme(text = element_text(size = 12),
-                                                                                                                                                                              plot.title = element_text(size = 18))
+        data_basis$raw_data %>% ggplot(aes(y = VALUE, x = FEATURE)) + ggtitle("Violin per Feature") + geom_violin(color = "#007BFF", alpha = 0.6) +  facet_wrap( ~ FEATURE, scale = "free_y", ncol = 1) +
+        theme(text = element_text(size = 12), plot.title = element_text(size = global_plot_title_size))
+        # theme_dark(base_size=global_base_size)
       
       plotly_fig <- ggplotly(fig)
       tictoc::toc()
@@ -451,9 +458,10 @@ q_vals <- do.call(bind_cols, q_vals)
     if (!is.null(data_basis$raw_data)) {
       tictoc::tic(msg = "Generate Boxplot Chart")
       fig <-
-        data_basis$raw_data %>% ggplot(aes(y = VALUE, x = FEATURE)) + ggtitle("Boxplot per Feature") + geom_boxplot(color = "#007BFF", alpha = 0.3) + facet_wrap( ~ FEATURE, scale = "free_y", ncol =
-                                                                                                                                                                    1) + theme(text = element_text(size = 12),
-                                                                                                                                                                               plot.title = element_text(size = 18))
+        data_basis$raw_data %>% ggplot(aes(y = VALUE, x = FEATURE)) + ggtitle("Boxplot per Feature") +
+        geom_boxplot(color = "#007BFF", alpha = 0.3) + facet_wrap( ~ FEATURE, scale = "free_y", ncol = 1) + 
+        # theme_dark(base_size=global_base_size)
+        theme(text = element_text(size = 12), plot.title = element_text(size = global_plot_title_size))
       plotly_fig <- ggplotly(fig)
       tictoc::toc()
       return (plotly_fig)
@@ -472,8 +480,9 @@ q_vals <- do.call(bind_cols, q_vals)
         corrplot(plotting_data,
                  bg = NULL,
                  method = 'number',
-                 order = 'original') + theme(text = element_text(size = 14),
-                                             plot.title = element_text(size = 16))
+                 order = 'original') + 
+        # theme_dark(base_size=global_base_size)
+        theme(text = element_text(size = global_text_size), plot.title = element_text(size = 16))
       #plotly_fig <- ggplotly(fig)
       tictoc::toc()
       return (fig)
@@ -525,20 +534,12 @@ q_vals <- do.call(bind_cols, q_vals)
         #param_loading_threshold
         plt_obj <-
           ggplot(plotting_data,
-                 aes(
-                   y = Feature,
-                   x = Loading,
-                   fill = Loading
-                 )) + geom_bar(
-                   stat = "identity",
-                   fill = ifelse(
-                     plotting_data$Loading > 0,
-                     includance_color,
-                     excludance_color
-                   )
-                 ) + scale_x_continuous(limits = c(-1, 1)) + ggtitle(paste0("Loadings for PC", tab)) + geom_vline(xintercept =
-                                                                                                                           0, alpha = 0.6) + theme(text = element_text(size = 14),
-                                                                                                                                                   plot.title = element_text(size = 18))
+                 aes( y = Feature, x = Loading, fill = Loading )) +
+          geom_bar( stat = "identity", fill = ifelse( plotting_data$Loading > 0, includance_color, excludance_color)) +
+          scale_x_continuous(limits = c(-1, 1)) + ggtitle(paste0("Loadings for PC", tab)) +
+          geom_vline(xintercept = 0, alpha = 0.6) +
+          theme(text = element_text(size = global_text_size), plot.title = element_text(size = global_plot_title_size))
+          # theme_dark(base_size=global_base_size)
         
         
       })
@@ -548,7 +549,9 @@ q_vals <- do.call(bind_cols, q_vals)
                  fluidRow(column(
                    6,
                    renderPlotly(
-                     ggplotly(voronoi_plots[[x]], height = 780) %>% layout(dragmode = "select")
+                     ggplotly(voronoi_plots[[x]] + theme(text = element_text(size = global_text_size), plot.title = element_text(size = global_plot_title_size))
+          # + theme_dark(base_size=global_base_size)
+                              , height = 780) %>% layout(dragmode = "select")
                    )
                  ),
                  column(6,

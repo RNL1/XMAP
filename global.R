@@ -40,18 +40,18 @@ createVoronoiPlots <-
         
         
         p1 <-
-          p1 + geom_voronoi(aes(fill = z), color=NA) + ggtitle(paste0("PC", idx, additionalTitle))
+          p1 + geom_voronoi(aes(fill = z), color=NA) #+ ggtitle(paste0("PC", idx, additionalTitle))
         
         
         p1 <- p1 +
         # p1 <- p1 + stat_voronoi(geom = "path") +
         # p1 <- p1 + stat_voronoi() +
-          labs(fill = "value") + scale_fill_gradient2(
+           scale_fill_gradient2(
             low = colorNeg,
             high = colorPos,
             mid=colorMid,
             na.value = colorNa
-          )
+          ) + labs(fill = "value")
         
         if(!is.null(plot_labels)){
           p1 <- p1 + geom_point(aes(colour = plot_labels))
@@ -66,7 +66,7 @@ createVoronoiPlots <-
           plot_dat <- plot_dat %>% mutate(z_log = log10(z))
           p2 <- ggplot(plot_dat, aes(x = x, y = y))
           p2 <-
-            p2 + geom_voronoi(aes(fill = z_log)) + ggtitle(paste0("log10(", "PC", idx, additionalTitle, ")"))
+            p2 + geom_voronoi(aes(fill = z_log)) #+ ggtitle(paste0("log10(", "PC", idx, additionalTitle, ")"))
           p2 <- formatPlot(p2)
           g <- grerid.arrange(p1, p2, nrow = 1)
         } else{
