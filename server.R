@@ -64,9 +64,9 @@ shinyServer(function(input, output, session) {
       
       pca_input_dat <-
         apply(as.matrix(subset),
-        2,
-        scale,
-        scale = F)
+              2,
+              scale,
+              scale = F)
       res_pca <-
         prcomp(pca_input_dat, center = FALSE, scale = FALSE)
       rel_sd <- cumsum(res_pca$sdev ^ 2) / sum(res_pca$sdev ^ 2)
@@ -106,7 +106,7 @@ shinyServer(function(input, output, session) {
       no_pcs <- min(max_comp, ncol(umap_data)) #res_pca$x
       q_vals <- lapply(1:no_pcs, function(pc) {
         inner <-
-          (diag(ncol(res_pca$rotation)) - res_pca$rotation[, pc] %*% t(res_pca$rotation[, pc]))
+          (diag(nrow(res_pca$rotation)) - res_pca$rotation[, pc] %*% t(res_pca$rotation[, pc]))
         qis <- do.call(c, lapply(1:nrow(res_pca$x), function(i) {
           # q_val <- res_pca$x[i,,drop=F] %*% inner %*% t(res_pca$x[i,,drop=F])
           q_val <-
@@ -122,50 +122,6 @@ shinyServer(function(input, output, session) {
       names(q_vals) <- sprintf("PC %02d", 1:no_pcs)
       q_vals <- do.call(bind_cols, q_vals)
       
-<<<<<<< HEAD
-      # q_vals <- future.apply::future_lapply(1:no_pcs, function(pc) {
-      #   inner <-
-      #     (diag(ncol(res_pca$rotation)) - res_pca$rotation[, pc] %*% t(res_pca$rotation[, pc]))
-      #   qis <- do.call(c, lapply(1:nrow(res_pca$x), function(i) {
-      #     # q_val <- res_pca$x[i,,drop=F] %*% inner %*% t(res_pca$x[i,,drop=F])
-      #     q_val <-
-      #       pca_input_dat[i, , drop = F] %*% inner %*% t(pca_input_dat[i, , drop =
-      #                                                                    F])
-      #     return(q_val)
-      #   }))
-      #   return(qis)
-      # })
-      # names(q_vals) <- sprintf("PC %02d", 1:no_pcs)
-      # q_vals <- do.call(bind_cols, q_vals)
-      # 
-      # q_vals <- t(apply(q_vals, 2, function(qis) {
-      #   qis <- (qis - min(qis))
-      #   qis <- (qis / max(qis))
-      #   qis <- abs(qis) * -1
-      # }))
-      
-      
-      
-      q_vals <- lapply(1:no_pcs, function(pc){
-      inner <- (diag(nrow(res_pca$rotation)) - res_pca$rotation[,pc] %*% t(res_pca$rotation[,pc]))
-      qis <- do.call(c, lapply(1:nrow(res_pca$x), function(i){
-      # q_val <- res_pca$x[i,,drop=F] %*% inner %*% t(res_pca$x[i,,drop=F])
-      q_val <- pca_input_dat[i,,drop=F] %*% inner %*% t(pca_input_dat[i,,drop=F])
-      return(q_val)
-      }))
-      qis <- (qis - min(qis))
-      qis <- (qis / max(qis))
-      # qis <- abs(qis) * -1
-  return(qis)
-})
-names(q_vals) <- sprintf("PC %02d", 1:no_pcs)
-q_vals <- do.call(bind_cols, q_vals)
-
-
-
-
-=======
->>>>>>> e8a0d68dbfe100bde34a90b9834fe18cdf02ba0d
       tictoc::toc()
       
       incProgress(0.1, detail = "Calculating Hotteling's T2")
@@ -212,27 +168,27 @@ q_vals <- do.call(bind_cols, q_vals)
   
   
   output$pointselectionA <- renderDataTable(data_basis$point_selection_A,extensions = "FixedHeader",
-                    style = "bootstrap4",
-                    options = list(
-                      pageLength = 3,
-                      autoWidth = TRUE,
-                      paging = TRUE,
-                      searching = F,
-                      ordering = TRUE,
-                      fixedHeader = TRUE
-                    ))
-
+                                            style = "bootstrap4",
+                                            options = list(
+                                              pageLength = 3,
+                                              autoWidth = TRUE,
+                                              paging = TRUE,
+                                              searching = F,
+                                              ordering = TRUE,
+                                              fixedHeader = TRUE
+                                            ))
+  
   output$pointselectionB <- renderDataTable(data_basis$point_selection_B,extensions = "FixedHeader",
-                    style = "bootstrap4",
-                    options = list(
-                      pageLength = 3,
-                      autoWidth = TRUE,
-                      paging = TRUE,
-                      searching = F,
-                      ordering = TRUE,
-                      fixedHeader = TRUE
-                    ))
-
+                                            style = "bootstrap4",
+                                            options = list(
+                                              pageLength = 3,
+                                              autoWidth = TRUE,
+                                              paging = TRUE,
+                                              searching = F,
+                                              ordering = TRUE,
+                                              fixedHeader = TRUE
+                                            ))
+  
   
   
   observeEvent(input$raw_data_upload, {
@@ -465,24 +421,24 @@ q_vals <- do.call(bind_cols, q_vals)
       
       voronoiTabs = lapply(1:nTabs, function(x) {
         tabPanel(paste0("PC", x),
-              fluidPage(
-                 fluidRow(column(
-                   6,
-                   renderPlotly(
-                     ggplotly(
-                       voronoi_plots[[x]] + theme(
-                         text = element_text(size = global_text_size),
-                         plot.title = element_text(size = global_plot_title_size)
-                       ),
-                       height = 600,
-                       #width = 700
-                     ) %>% layout(dragmode = "select")
-                   )
-                 ),
-                 column(6,
-                        renderPlotly(
-                          ggplotly(loading_plots[[x]], height=600)# height=780
-                        )))))
+                 fluidPage(
+                   fluidRow(column(
+                     6,
+                     renderPlotly(
+                       ggplotly(
+                         voronoi_plots[[x]] + theme(
+                           text = element_text(size = global_text_size),
+                           plot.title = element_text(size = global_plot_title_size)
+                         ),
+                         height = 600,
+                         #width = 700
+                       ) %>% layout(dragmode = "select")
+                     )
+                   ),
+                   column(6,
+                          renderPlotly(
+                            ggplotly(loading_plots[[x]], height=600)# height=780
+                          )))))
       })
       tictoc::toc()
       do.call(tabsetPanel, voronoiTabs)
