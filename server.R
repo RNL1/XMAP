@@ -152,7 +152,7 @@ shinyServer(function(input, output, session) {
       
       
       q_vals <- lapply(1:no_pcs, function(pc){
-      inner <- (diag(ncol(res_pca$rotation)) - res_pca$rotation[,pc] %*% t(res_pca$rotation[,pc]))
+      inner <- (diag(nrow(res_pca$rotation)) - res_pca$rotation[,pc] %*% t(res_pca$rotation[,pc]))
       qis <- do.call(c, lapply(1:nrow(res_pca$x), function(i){
       # q_val <- res_pca$x[i,,drop=F] %*% inner %*% t(res_pca$x[i,,drop=F])
       q_val <- pca_input_dat[i,,drop=F] %*% inner %*% t(pca_input_dat[i,,drop=F])
