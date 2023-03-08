@@ -157,11 +157,11 @@ shinyServer(function(input, output, session) {
   observe({
     if (input$select_points_for == "Cluster A") {
       if(!is.null(event_data("plotly_selected")) & length(event_data("plotly_selected"))>0){
-        data_basis$point_selection_A = event_data("plotly_selected") %>% select(pointNumber)
+        data_basis$point_selection_A = event_data("plotly_selected") %>% select(pointNumber) %>% mutate(pointNumber = pointNumber + 1)
       }
     } else if (input$select_points_for == "Cluster B") {
       if(!is.null(event_data("plotly_selected"))  & length(event_data("plotly_selected"))>0){
-        data_basis$point_selection_B = event_data("plotly_selected") %>% select(pointNumber)
+        data_basis$point_selection_B = event_data("plotly_selected") %>% select(pointNumber) %>% mutate(pointNumber = pointNumber + 1)
       }
     }
   })
