@@ -29,7 +29,7 @@ Once both clusters are selected, the corresponding data points show up in (C) an
 clusters are shown in (E).
 
 # Notes
-Be aware that this is a prototype implementation. Not all user interface components ar fully responsive and the calculations are not optimized.
+Be aware that this is a prototype implementation. Not all user interface components are fully responsive and the calculations are not optimized.
 
 # Reference
 <a id="1">[1]</a> Roman Josef Rainer, Michael Mayr, Johannes Himmelbauer, Ramin Nikzad-Langerodi (2022).
